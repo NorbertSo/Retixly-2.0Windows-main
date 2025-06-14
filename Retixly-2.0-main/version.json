@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "release_date": "2024-12-01",
+  "download_url": "https://github.com/NorbertSo/retixly-releases/releases/download/v1.0.0/Retixly-1.0.0-Setup.exe",
+  "changelog": "Pierwsza wersja testowa",
+  "required": false,
+  "min_version": "1.0.0"
+}

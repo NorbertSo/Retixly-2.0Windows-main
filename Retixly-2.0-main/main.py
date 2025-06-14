@@ -34,12 +34,15 @@ logger.debug("Current working directory: %s", os.getcwd())
 current_dir = Path(__file__).resolve().parent
 sys.path.append(str(current_dir))
 
+# WERSJA APLIKACJI - ZMIEŃ TU PRZY KAŻDEJ NOWEJ WERSJI
+APP_VERSION = "1.0.0"
+
 def import_qt():
     """Bezpieczny import PyQt6."""
     try:
         from PyQt6.QtWidgets import (QApplication, QMessageBox, QSplashScreen,
                                    QMainWindow, QWidget, QVBoxLayout)
-        from PyQt6.QtCore import QTranslator, QLocale, Qt, QSettings
+        from PyQt6.QtCore import QTranslator, QLocale, Qt, QSettings, QTimer
         from PyQt6.QtGui import QPixmap, QAction, QIcon
         return {
             'QApplication': QApplication,
@@ -54,7 +57,8 @@ def import_qt():
             'QMainWindow': QMainWindow,
             'QWidget': QWidget,
             'QVBoxLayout': QVBoxLayout,
-            'QSettings': QSettings
+            'QSettings': QSettings,
+            'QTimer': QTimer
         }
     except ImportError as e:
         logger.error(f"Błąd importu PyQt6: {e}")
@@ -85,7 +89,7 @@ def check_dependencies():
             logger.error(f"Nie można załadować {package_name}: {e}")
             
             # Rozróżnij pakiety krytyczne od opcjonalnych
-            if package_name in ['PyQt6', 'Pillow', 'cryptography']:
+            if package_name in ['PyQt6', 'Pillow', 'cryptography', 'requests']:
                 missing_packages.append(package_name)
             else:
                 optional_packages.append(package_name)
@@ -146,7 +150,7 @@ class RetixlyApp:
                 
             self.app = self.qt['QApplication'](sys.argv)
             self.app.setApplicationName("Retixly")
-            self.app.setApplicationVersion("3.0")
+            self.app.setApplicationVersion(APP_VERSION)
             self.app.setOrganizationName("RetixlySoft")
             self.app.setOrganizationDomain("retixly.com")
             
@@ -164,6 +168,9 @@ class RetixlyApp:
             # Inicjalizacja systemu licencji
             self.init_license_system()
             
+            # *** NOWE: Inicjalizacja systemu auto-updater ***
+            self.init_auto_updater()
+            
             # Ukryj ekran powitalny i pokaż główne okno
             if hasattr(self, 'splash'):
                 self.splash.finish(self.main_window)
@@ -177,6 +184,39 @@ class RetixlyApp:
             logger.error(f"Błąd podczas inicjalizacji aplikacji: {e}")
             self.show_error_message("Błąd inicjalizacji", str(e))
             sys.exit(1)
+
+    def init_auto_updater(self):
+        """Inicjalizuje system automatycznych aktualizacji"""
+        try:
+            if hasattr(self, 'splash'):
+                self.splash.showMessage("Inicjalizacja systemu aktualizacji...", 
+                                      self.qt['Qt'].AlignmentFlag.AlignBottom | self.qt['Qt'].AlignmentFlag.AlignCenter)
+                self.app.processEvents()
+            
+            from src.core.updater import AutoUpdater
+            self.updater = AutoUpdater(self.main_window, current_version=APP_VERSION)
+            
+            # Sprawdź aktualizacje przy starcie (po 10 sekundach)
+            self.qt['QTimer'].singleShot(10000, lambda: self.updater.check_for_updates(silent=True))
+            
+            logger.info(f"Auto-updater zainicjalizowany z wersją {APP_VERSION}")
+            
+        except Exception as e:
+            logger.error(f"Błąd inicjalizacji auto-updater: {e}")
+            # Kontynuuj bez auto-updater - aplikacja będzie działać normalnie
+    
+    def check_for_updates_manually(self):
+        """Ręczne sprawdzanie aktualizacji (dla menu)"""
+        try:
+            if hasattr(self, 'updater'):
+                self.updater.check_for_updates(silent=False)
+            else:
+                msg = self.qt['QMessageBox'](self.main_window)
+                msg.setWindowTitle("Auto-updater niedostępny")
+                msg.setText("System aktualizacji nie jest dostępny.")
+                msg.exec()
+        except Exception as e:
+            logger.error(f"Błąd ręcznego sprawdzania aktualizacji: {e}")
 
     def show_splash_screen(self):
         """Pokazuje ekran powitalny jeśli istnieje."""
@@ -374,14 +414,14 @@ class RetixlyApp:
         """Tworzy podstawowe okno awaryjne."""
         from PyQt6.QtWidgets import QLabel
         window = self.qt['QMainWindow']()
-        window.setWindowTitle("Retixly 3.0 - Emergency Mode")
+        window.setWindowTitle(f"Retixly {APP_VERSION} - Emergency Mode")
         window.setMinimumSize(800, 600)
         
         central_widget = self.qt['QWidget']()
         layout = self.qt['QVBoxLayout'](central_widget)
         
-        label = QLabel("""
-        <h1>Retixly 3.0 - Emergency Mode</h1>
+        label = QLabel(f"""
+        <h1>Retixly {APP_VERSION} - Emergency Mode</h1>
         <p>The application is running in emergency mode due to missing components.</p>
         <p>Please check the installation and ensure all required files are present.</p>
         <br>
@@ -648,7 +688,7 @@ class RetixlyApp:
         logger.info("Zastosowano domyślne style")
 
     def create_menu_bar(self):
-        """Tworzy pasek menu z wyborem języka."""
+        """Tworzy pasek menu z wyborem języka i opcjami aktualizacji."""
         if not hasattr(self, "main_window"):
             return
         # Dostępne języki
@@ -663,10 +703,26 @@ class RetixlyApp:
         menu_bar = main_window.menuBar() if hasattr(main_window, "menuBar") else None
         if not menu_bar:
             return
-        # Usuń istniejące menu języka (jeśli istnieje)
-        for action in menu_bar.actions():
-            if hasattr(action, "menu") and action.menu() and action.menu().title() == "Language":
-                menu_bar.removeAction(action)
+        
+        # Usuń istniejące menu (jeśli istnieje)
+        menu_bar.clear()
+        
+        # Menu Help/Pomoc
+        help_menu = menu_bar.addMenu("Help")
+        
+        # Akcja sprawdzania aktualizacji
+        check_updates_action = self.qt['QAction']("🔄 Check for Updates", main_window)
+        check_updates_action.triggered.connect(self.check_for_updates_manually)
+        help_menu.addAction(check_updates_action)
+        
+        # Separator
+        help_menu.addSeparator()
+        
+        # Informacje o wersji
+        about_action = self.qt['QAction'](f"ℹ️ About Retixly {APP_VERSION}", main_window)
+        about_action.triggered.connect(self.show_about_dialog)
+        help_menu.addAction(about_action)
+        
         # Utwórz menu języka
         language_menu = menu_bar.addMenu("Language")
         # Przechowuj akcje językowe
@@ -682,6 +738,27 @@ class RetixlyApp:
         language_menu.setTitle("Language")
         # Zapamiętaj menu do retranslacji
         self._language_menu = language_menu
+        self._help_menu = help_menu
+
+    def show_about_dialog(self):
+        """Pokazuje dialog z informacjami o aplikacji."""
+        try:
+            msg = self.qt['QMessageBox'](self.main_window)
+            msg.setWindowTitle("About Retixly")
+            msg.setIcon(self.qt['QMessageBox'].Icon.Information)
+            msg.setText(f"<h2>Retixly {APP_VERSION}</h2>")
+            msg.setInformativeText(
+                f"<p><b>Version:</b> {APP_VERSION}</p>"
+                "<p><b>Developer:</b> RetixlySoft</p>"
+                "<p><b>License:</b> MIT License</p>"
+                "<br>"
+                "<p>Advanced AI-powered background removal tool</p>"
+                "<p>Built with PyQt6 and modern AI models</p>"
+            )
+            msg.setStandardButtons(self.qt['QMessageBox'].StandardButton.Ok)
+            msg.exec()
+        except Exception as e:
+            logger.error(f"Błąd pokazywania dialogu About: {e}")
 
     def change_language_safe(self, lang_code):
         """Bezpieczna zmiana języka - POPRAWIONA."""
@@ -751,7 +828,6 @@ class RetixlyApp:
             self.translator = None
             self.update_language_menu_selection('en')
 
-
     def force_retranslate_ui(self):
         """Wymusza retranslację całego UI."""
         try:
@@ -788,15 +864,14 @@ class RetixlyApp:
             except AttributeError:
                 _ = lambda context, text: text
             try:
-                self.main_window.setWindowTitle(_("Retixly", "Retixly 3.0"))
+                self.main_window.setWindowTitle(_("Retixly", f"Retixly {APP_VERSION}"))
             except Exception as e:
                 logger.warning(f"Nie można ustawić tytułu głównego okna: {e}")
             # Przetłumacz menu języka jeśli istnieje
             if hasattr(self, "_language_menu"):
                 self._language_menu.setTitle(_("Menu", "Language"))
-                for code, action in self.language_actions.items():
-                    # Zmień tekst akcji na przetłumaczony (tu uproszczone, bo flagi zostają)
-                    action.setText(action.text())
+            if hasattr(self, "_help_menu"):
+                self._help_menu.setTitle(_("Menu", "Help"))
         # Sygnalizuj dzieciom do retranslacji jeśli mają taką metodę
         if hasattr(self, "main_window") and hasattr(self.main_window, "retranslate_ui"):
             try:
@@ -825,12 +900,18 @@ class RetixlyApp:
             self.show_error_message("Błąd wykonania", str(e))
             return 1
         finally:
-            # Czyści zasoby licencji przy zamknięciu
+            # Czyści zasoby przy zamknięciu
             if hasattr(self, 'license_controller'):
                 try:
                     self.license_controller.cleanup()
                 except Exception as e:
                     logger.error(f"Błąd podczas czyszczenia licencji: {e}")
+                    
+            if hasattr(self, 'updater'):
+                try:
+                    self.updater.cleanup()
+                except Exception as e:
+                    logger.error(f"Błąd podczas czyszczenia auto-updater: {e}")
 
 def main():
     """Główna funkcja aplikacji."""
@@ -864,11 +945,11 @@ def main():
                 "• PyQt6 - interfejs użytkownika\n"
                 "• Pillow - przetwarzanie obrazów\n"
                 "• cryptography - system licencji\n"
+                "• requests - sprawdzanie aktualizacji\n"
                 "• rembg - usuwanie tła (opcjonalne)\n"
                 "• numpy - operacje na obrazach (opcjonalne)\n"
                 "• opencv-python - zaawansowane przetwarzanie (opcjonalne)\n"
                 "• boto3 - integracja z AWS S3 (opcjonalne)\n"
-                "• requests - komunikacja z API (opcjonalne)\n"
                 "• onnxruntime - modele AI dla rembg (opcjonalne)"
             )
             error_dialog.exec()
@@ -891,6 +972,7 @@ def main():
         setup_environment()
         
         # Uruchomienie aplikacji
+        logger.info(f"🚀 Uruchamianie Retixly {APP_VERSION}")
         retixly_app = RetixlyApp()
         exit_code = retixly_app.run()
         
