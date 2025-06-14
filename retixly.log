@@ -1,0 +1,37 @@
+2025-06-14 01:53:46,735 - __main__ - INFO - Plik .env nie znaleziony - u¿ywam domyœlnej konfiguracji
+2025-06-14 01:53:46,949 - __main__ - INFO - Pakiet PyQt6 za³adowany pomyœlnie
+2025-06-14 01:53:46,967 - __main__ - INFO - Pakiet Pillow za³adowany pomyœlnie
+2025-06-14 01:53:56,933 - __main__ - INFO - Pakiet rembg za³adowany pomyœlnie
+2025-06-14 01:53:56,933 - __main__ - INFO - Pakiet numpy za³adowany pomyœlnie
+2025-06-14 01:53:56,933 - __main__ - INFO - Pakiet opencv-python za³adowany pomyœlnie
+2025-06-14 01:53:58,198 - __main__ - INFO - Pakiet boto3 za³adowany pomyœlnie
+2025-06-14 01:53:58,485 - __main__ - INFO - Pakiet requests za³adowany pomyœlnie
+2025-06-14 01:53:58,485 - __main__ - INFO - Pakiet onnxruntime za³adowany pomyœlnie
+2025-06-14 01:53:58,506 - __main__ - INFO - Pakiet cryptography za³adowany pomyœlnie
+2025-06-14 01:53:58,508 - __main__ - INFO - Katalog assets/styles utworzony/sprawdzony
+2025-06-14 01:53:58,508 - __main__ - INFO - Katalog assets/icons utworzony/sprawdzony
+2025-06-14 01:53:58,508 - __main__ - INFO - Katalog translations utworzony/sprawdzony
+2025-06-14 01:53:58,509 - __main__ - INFO - Katalog temp utworzony/sprawdzony
+2025-06-14 01:53:58,509 - __main__ - INFO - Katalog logs utworzony/sprawdzony
+2025-06-14 01:53:58,509 - __main__ - INFO - Katalog data utworzony/sprawdzony
+2025-06-14 01:53:58,536 - __main__ - INFO - SettingsController za³adowany pomyœlnie
+2025-06-14 01:54:21,398 - src.views.main_window - INFO - Starting UI retranslation...
+2025-06-14 01:54:21,399 - src.views.main_window - INFO - UI retranslation completed successfully
+2025-06-14 01:54:21,401 - __main__ - INFO - Wys³ano LanguageChange event do wszystkich widgetów
+2025-06-14 01:54:21,405 - __main__ - INFO - MainWindow za³adowany pomyœlnie
+2025-06-14 01:54:21,407 - __main__ - WARNING - Nie znaleziono pliku stylu: assets\styles\light.qss
+2025-06-14 01:54:21,533 - __main__ - INFO - Zastosowano domyœlne style
+2025-06-14 01:54:21,533 - __main__ - INFO - Domyœlna konfiguracja stylu i jêzyka ustawiona
+2025-06-14 01:54:21,535 - __main__ - WARNING - Image engine initialization failed: No module named 'src.core.engine_manager'
+2025-06-14 01:54:21,538 - src.controllers.license_controller - INFO - Inicjalizacja kontrolera licencji...
+2025-06-14 01:54:21,538 - src.controllers.license_controller - ERROR - B³¹d tworzenia dev licencji: Subscription.__init__() got an unexpected keyword argument 'expires_at'
+2025-06-14 01:54:21,548 - src.controllers.license_controller - INFO - Utworzono darmow¹ licencjê
+2025-06-14 01:54:21,550 - __main__ - INFO - System licencji zainicjalizowany pomyœlnie
+2025-06-14 01:54:21,650 - src.views.main_window - INFO - Starting UI retranslation...
+2025-06-14 01:54:21,650 - src.views.main_window - INFO - UI retranslation completed successfully
+2025-06-14 01:54:38,396 - src.core.image_engine - ERROR - Failed to create Windows engine: No module named 'src.core.windows_engine', falling back to CarveKit
+2025-06-14 01:54:40,322 - src.core.carvekit_engine - INFO - Processing round image: (480, 480), quality: 1.00
+2025-06-14 01:54:40,322 - src.core.carvekit_engine - WARNING - CarveKit not available, using rembg fallback
+2025-06-14 01:54:45,538 - src.controllers.license_controller - INFO - Kontroler licencji zamkniêty
+2025-06-14 01:54:45,556 - src.controllers.license_controller - INFO - Kontroler licencji zamkniêty
+2025-06-14 01:54:45,557 - __main__ - INFO - Zamykanie aplikacji - kod wyjœcia: 0
