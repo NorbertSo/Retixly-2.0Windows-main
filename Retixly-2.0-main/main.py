@@ -2,10 +2,9 @@ import sys
 import os
 from pathlib import Path
 import logging
-import importlib
+import importlib  # ← MUSI BYĆ
 from functools import partial
-from bootstrap import ensure_packages
-ensure_packages()
+
 
 if sys.platform == "win32":
     os.environ['PYTHONIOENCODING'] = 'utf-8'
@@ -66,37 +65,6 @@ def import_qt():
         logger.error(f"Błąd importu PyQt6: {e}")
         raise ImportError("PyQt6 nie jest zainstalowany. Użyj: pip install PyQt6")
 
-def check_dependencies():
-    """Sprawdza czy wszystkie wymagane biblioteki są zainstalowane."""
-    required_packages = {
-        'PyQt6': 'PyQt6',
-        'Pillow': 'PIL',
-        'rembg': 'rembg',
-        'numpy': 'numpy',
-        'opencv-python': 'cv2',
-        'boto3': 'boto3',
-        'requests': 'requests',
-        'onnxruntime': 'onnxruntime',
-        'cryptography': 'cryptography'  # Nowy wymóg dla systemu licencji
-    }
-    
-    missing_packages = []
-    optional_packages = []
-    
-    for package_name, import_name in required_packages.items():
-        try:
-            importlib.import_module(import_name)
-            logger.info(f"Pakiet {package_name} załadowany pomyślnie")
-        except ImportError as e:
-            logger.error(f"Nie można załadować {package_name}: {e}")
-            
-            # Rozróżnij pakiety krytyczne od opcjonalnych
-            if package_name in ['PyQt6', 'Pillow', 'cryptography', 'requests']:
-                missing_packages.append(package_name)
-            else:
-                optional_packages.append(package_name)
-            
-    return missing_packages, optional_packages
 
 def setup_environment():
     """Sprawdza i tworzy wymagane katalogi."""
@@ -932,7 +900,8 @@ def main():
         app = qt['QApplication'](sys.argv)
         
         # Sprawdzenie zależności
-        missing_packages, optional_packages = check_dependencies()
+        from bootstrap_ui import check_dependencies_with_ui
+        missing_packages, optional_packages = check_dependencies_with_ui()
         
         if missing_packages:
             error_msg = f"Brakujące pakiety krytyczne: {', '.join(missing_packages)}\n"
