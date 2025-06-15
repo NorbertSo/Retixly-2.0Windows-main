@@ -21,7 +21,7 @@ echo       main.py - OK
 
 echo.
 echo [3/5] Budowanie EXE z PyInstaller...
-python -m PyInstaller build_config.spec
+python -m PyInstaller Retixly.spec
 
 if not exist "dist\Retixly\Retixly.exe" (
     echo BLAD: Nie udalo sie zbudowac EXE

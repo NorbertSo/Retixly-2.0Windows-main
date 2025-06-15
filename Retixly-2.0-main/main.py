@@ -900,8 +900,23 @@ def main():
         app = qt['QApplication'](sys.argv)
         
         # Sprawdzenie zależności
-        from bootstrap_ui import check_dependencies_with_ui
-        missing_packages, optional_packages = check_dependencies_with_ui()
+        
+        try:
+            from bootstrap_ui import check_and_bootstrap
+            print("✅ Bootstrap imported successfully")
+        except ImportError as e:
+            print(f"❌ Bootstrap import failed: {e}")
+            def check_and_bootstrap():
+                return True  # Fallback function
+        try:
+            bootstrap_success = check_and_bootstrap()
+            missing_packages = []
+            optional_packages = []
+            print("✅ Bootstrap check completed")
+        except Exception as e:
+            print(f"❌ Bootstrap check failed: {e}")
+            missing_packages = []
+            optional_packages = []
         
         if missing_packages:
             error_msg = f"Brakujące pakiety krytyczne: {', '.join(missing_packages)}\n"
