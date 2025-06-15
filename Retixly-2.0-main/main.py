@@ -4,6 +4,8 @@ from pathlib import Path
 import logging
 import importlib
 from functools import partial
+from bootstrap import ensure_packages
+ensure_packages()
 
 if sys.platform == "win32":
     os.environ['PYTHONIOENCODING'] = 'utf-8'

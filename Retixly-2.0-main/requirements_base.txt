@@ -1,0 +1,11 @@
+# requirements_base.txt - TYLKO DO BUDOWANIA APLIKACJI
+# Te pakiety pójdą do EXE (~50MB)
+
+PyQt6>=6.6.1
+Pillow>=10.1.0
+requests>=2.31.0
+cryptography>=41.0.0
+packaging>=23.0
+
+# UWAGA: Reszta pakietów zostanie pobrana automatycznie:
+# torch, rembg, numpy, opencv-python, onnxruntime, boto3, etc.
