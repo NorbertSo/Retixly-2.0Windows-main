@@ -9,27 +9,11 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QPushButton,
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont
 
-def check_and_bootstrap():
-    """Main bootstrap function that ensures only one instance runs."""
-    marker = Path.home() / ".retixly_installed"
-    if marker.exists():
-        return True
-        
-    # Use existing QApplication if possible
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-        
-    dialog = WorkingBootstrap()
-    result = dialog.exec()
-    
-    return result == QDialog.DialogCode.Accepted
-
 class WorkingBootstrap(QDialog):
     """Bootstrap który NAPRAWDĘ działa - bez bugów!"""
     
     def __init__(self):
-        super().__init__(None)  # Pass None to ensure proper parent handling
+        super().__init__()
         self.installation_complete = False
         self.setup_ui()
         self.setModal(True)
@@ -101,16 +85,10 @@ class WorkingBootstrap(QDialog):
         if success:
             self.log.append("🎉 Installation finished!")
             
-            # Create marker file BEFORE accepting the dialog
-            try:
-                marker = Path.home() / ".retixly_installed"
-                marker.write_text("installed")
-                self.log.append("📁 Setup completed - marker file created")
-            except Exception as e:
-                self.log.append(f"❌ Error creating marker file: {e}")
-                QMessageBox.critical(self, "Error", 
-                                  "Failed to create installation marker. Please check permissions.")
-                return
+            # Create marker file
+            marker = Path.home() / ".retixly_installed"
+            marker.write_text("installed")
+            self.log.append("📁 Setup completed - marker file created")
             
             self.installation_complete = True
             self.done_btn.setVisible(True)
@@ -120,11 +98,7 @@ class WorkingBootstrap(QDialog):
     
     def finish_setup(self):
         """Finish setup and close dialog."""
-        if self.installation_complete:
-            self.accept()  # Only accept if installation is truly complete
-        else:
-            QMessageBox.warning(self, "Installation Incomplete", 
-                              "Please wait for installation to complete!")
+        self.accept()
     
     def closeEvent(self, event):
         """Prevent closing until installation is complete."""
@@ -230,6 +204,32 @@ def should_show_bootstrap():
     """Check if bootstrap should be shown."""
     marker = Path.home() / ".retixly_installed"
     return not marker.exists()
+
+def check_and_bootstrap():
+    """Main bootstrap function - called from main.py"""
+    print("🔍 Bootstrap check...")
+    
+    marker = Path.home() / ".retixly_installed" 
+    print(f"📁 Marker file: {marker}")
+    print(f"✅ Marker exists: {marker.exists()}")
+    
+    if not marker.exists():
+        print("🚀 First run detected - showing bootstrap dialog")
+        
+        # Ensure we have QApplication
+        app = QApplication.instance()
+        if app is None:
+            app = QApplication(sys.argv)
+        
+        # Show bootstrap dialog - this BLOCKS until complete
+        dialog = WorkingBootstrap()
+        result = dialog.exec()
+        
+        print(f"✅ Bootstrap result: {result}")
+        return result == QDialog.DialogCode.Accepted
+    else:
+        print("ℹ️ Bootstrap not needed - marker exists")
+        return True
 
 # Test function
 if __name__ == "__main__":

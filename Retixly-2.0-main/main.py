@@ -707,7 +707,7 @@ class RetixlyApp:
             self.language_actions[lang["code"]] = action
         language_menu.setTitle("Language")
         # Zapamiętaj menu do retranslacji
-        self._language_menu = language_menu
+        self._language
         self._help_menu = help_menu
 
     def show_about_dialog(self):
@@ -892,82 +892,36 @@ def main():
         # Importuj klasy Qt
         qt = import_qt()
         
-        # Upewnij się, że mamy argumenty dla QApplication
-        if not sys.argv:
-            sys.argv.append('')
+        # CRITICAL: Check bootstrap BEFORE creating QApplication
+        marker_file = Path.home() / ".retixly_installed"
         
-        # Utworzenie QApplication przed sprawdzeniem zależności
+        if not marker_file.exists():
+            print("[BOOTSTRAP] 🚀 FIRST RUN - BOOTSTRAP REQUIRED!")
+            try:
+                from bootstrap_ui import check_and_bootstrap
+                bootstrap_success = check_and_bootstrap()
+                
+                if not bootstrap_success:
+                    print("[BOOTSTRAP] ❌ Bootstrap cancelled - EXITING!")
+                    sys.exit(1)
+                    
+                # Double-check marker file was created
+                if not marker_file.exists():
+                    print("[BOOTSTRAP] ❌ Marker file not created - EXITING!")
+                    sys.exit(1)
+                    
+            except Exception as e:
+                print(f"[BOOTSTRAP] ❌ Error: {e}")
+                sys.exit(1)
+
+        # Create the main application only after bootstrap
         app = qt['QApplication'](sys.argv)
         
-        # Sprawdzenie zależności
+        # Inicjalizacja głównej aplikacji
+        retixly = RetixlyApp()
         
-        try:
-            from bootstrap_ui import check_and_bootstrap
-            print("✅ Bootstrap imported successfully")
-        except ImportError as e:
-            print(f"❌ Bootstrap import failed: {e}")
-            def check_and_bootstrap():
-                return True  # Fallback function
-        try:
-            bootstrap_success = check_and_bootstrap()
-            missing_packages = []
-            optional_packages = []
-            print("✅ Bootstrap check completed")
-        except Exception as e:
-            print(f"❌ Bootstrap check failed: {e}")
-            missing_packages = []
-            optional_packages = []
-        
-        if missing_packages:
-            error_msg = f"Brakujące pakiety krytyczne: {', '.join(missing_packages)}\n"
-            error_msg += f"Zainstaluj je używając: pip install {' '.join(missing_packages)}"
-            
-            error_dialog = qt['QMessageBox']()
-            error_dialog.setIcon(qt['QMessageBox'].Icon.Critical)
-            error_dialog.setWindowTitle("Brakujące zależności")
-            error_dialog.setText(error_msg)
-            error_dialog.setDetailedText(
-                "Wymagane pakiety dla pełnej funkcjonalności:\n\n"
-                "• PyQt6 - interfejs użytkownika\n"
-                "• Pillow - przetwarzanie obrazów\n"
-                "• cryptography - system licencji\n"
-                "• requests - sprawdzanie aktualizacji\n"
-                "• rembg - usuwanie tła (opcjonalne)\n"
-                "• numpy - operacje na obrazach (opcjonalne)\n"
-                "• opencv-python - zaawansowane przetwarzanie (opcjonalne)\n"
-                "• boto3 - integracja z AWS S3 (opcjonalne)\n"
-                "• onnxruntime - modele AI dla rembg (opcjonalne)"
-            )
-            error_dialog.exec()
-            sys.exit(1)
-        
-        if optional_packages:
-            logger.warning(f"Brakujące pakiety opcjonalne: {', '.join(optional_packages)}")
-            logger.warning("Niektóre funkcje mogą być niedostępne")
-            
-            # Pokaż ostrzeżenie ale kontynuuj
-            warning_dialog = qt['QMessageBox']()
-            warning_dialog.setIcon(qt['QMessageBox'].Icon.Warning)
-            warning_dialog.setWindowTitle("Brakujące pakiety opcjonalne")
-            warning_dialog.setText(f"Niektóre pakiety opcjonalne nie są zainstalowane: {', '.join(optional_packages)}")
-            warning_dialog.setInformativeText("Aplikacja będzie działać, ale niektóre funkcje mogą być niedostępne.")
-            warning_dialog.setStandardButtons(qt['QMessageBox'].StandardButton.Ok)
-            warning_dialog.exec()
-        
-        # Sprawdzenie i utworzenie katalogów
-        setup_environment()
-        
-        # Uruchomienie aplikacji
-        logger.info(f"🚀 Uruchamianie Retixly {APP_VERSION}")
-        retixly_app = RetixlyApp()
-        exit_code = retixly_app.run()
-        
-        # Czyszczenie plików tymczasowych
-        cleanup_temp_files()
-        
-        logger.info("Zamykanie aplikacji - kod wyjścia: %s", exit_code)
-        sys.exit(exit_code)
-        
+        # Uruchomienie pętli zdarzeń
+        return app.exec()
     except ImportError as e:
         print(f"CRITICAL IMPORT ERROR: {e}")
         if 'qt' in locals():
